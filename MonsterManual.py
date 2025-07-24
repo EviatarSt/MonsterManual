@@ -8,6 +8,8 @@ import string
 import requests
 from io import BytesIO
 from PIL import Image, ImageTk
+import openai
+from openai import OpenAI
        
 
 class GUI_CMP:
@@ -42,7 +44,7 @@ class GUI_CMP:
         placesList = ["in a forest", "in a dungeon", "in a corridor", "in avalley",
                       "in a desert", "on a bridge",
                       "in a cave", "on a ship", "on a mountainside", 
-                      "in a graveyard"]
+                      "in a graveyard", "in the snow"]
 
 
         LabelTime = Tk.Label(self.myRoot, text="time: ")
@@ -122,6 +124,9 @@ class GUI_CMP:
         self.monsterText = {
             "widget": ThemonsterText,
             "place_info": ThemonsterText.place_info()}
+
+        with open("C:\\OAF\\Pandoras Box.txt", 'r', encoding='utf-8') as file:
+            self.openAiKey = file.read()
         
         self.myRoot.mainloop()
     
@@ -133,6 +138,7 @@ class GUI_CMP:
             theMonster = [monster for monster in theMonsters if monster['index'] == self.monsterListEntry.get()][0]
 
             orcUrl = "https://www.dnd5eapi.co" + theMonster["url"]
+            
             response = requests.get(orcUrl, self.headers)
             if response.status_code == 200:
                 keys_to_exclude = {"url", "updated_at", "image", "forms", "legendary_actions", "reactions"}
@@ -142,6 +148,20 @@ class GUI_CMP:
                 self.monsterText["widget"].insert(Tk.END, json.dumps(theMonster, indent=2))
                 print(theMonster)
                 
+                client = OpenAI(api_key=self.openAiKey)
+
+                myMessage = " ".join(["give me a 1-paragraph long description of the D&D (version 5) monster called \"",
+                                    self.monsterListEntry.get(),
+                "\", and another short paragraph listing natural enemies and disliked races of the monster"])
+                opresponse = client.chat.completions.create(
+                    model="gpt-4o",  # or "gpt-3.5-turbo"
+                    messages=[
+                        {"role": "user", "content": myMessage}
+                        ]
+                    )
+                print("\n")
+                print(opresponse.choices[0].message.content)
+                print("\n")
                 response = requests.get(orcImage)
                 if response.status_code == 200:
 
